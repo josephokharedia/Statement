@@ -1,0 +1,23 @@
+{
+  "name": "statement",
+  "version": "1.0.0",
+  "description": "",
+  "main": "CsvParser.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "node CsvParser.js",
+    "google-api": "node Google-Api.js",
+    "test-ob": "node Test-Observable.js"
+  },
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "csv-parse": "^3.0.0",
+    "dateformat": "^3.0.3",
+    "googleapis": "^34.0.0",
+    "http-debug": "^0.1.2",
+    "mailparser": "^2.3.4",
+    "object-hash": "^1.3.0",
+    "rxjs": "^6.3.3"
+  }
+}
