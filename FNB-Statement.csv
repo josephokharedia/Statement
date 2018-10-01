@@ -1,0 +1,64 @@
+2,62295306578,'MR JOSEPH I OKHAREDIA','FNB PREMIER CHEQUE ACCOUNT'
+3
+3,,'Statement'
+3,'Statement Number','From Date','To Date','Opening Balance','Closing Balance','VAT Paid'
+3,92,'11 August 2018','12 September 2018',-177.49,-110.71,-22.70
+4
+4,,'Summary'
+4,,,'Interest On Debit Balance',.00%
+4,'Statement Date','Description','Number','Sub Total','Total'
+4,'12 September 2018','Opening Balance',,,-177.49
+4,'12 September 2018','Funds Received/Credits',5,,76894.80
+4,'12 September 2018','Cash Deposits',0,0.00
+4,'12 September 2018','Other Deposits',0,0.00
+4,'12 September 2018','Inter-Account Transfers In',2,800.00
+4,'12 September 2018','Electronic Payments Received',3,76094.80
+4,'12 September 2018','Funds Used/Debits',10,,-76654.02
+4,'12 September 2018','Cash Withdrawals (Branch)',0,0.00
+4,'12 September 2018','Cash Withdrawals (Other)',0,0.00
+4,'12 September 2018','Cheques Processed (Non Cash)',0,0.00
+4,'12 September 2018','Debit Orders/Scheduled Payments',7,-854.02
+4,'12 September 2018','Account Payments',1,-50000.00
+4,'12 September 2018','Inter-Account Transfers Out',2,-25800.00
+4,'12 September 2018','Card Purchases (Swipes)',0,0.00
+4,'12 September 2018','Fuel Purchases',0,0.00
+4,'12 September 2018','Bank Charges',5,,-174.00
+4,'12 September 2018','Service Fees',1,-140.00
+4,'12 September 2018','Cash Deposit Fees',0,0.00
+4,'12 September 2018','Cash Handling Fees',0,0.00
+4,'12 September 2018','Other Fees',4,-34.00
+4,'12 September 2018','Interest on Credit Balance',0,,0.00
+4,'12 September 2018','Interest on Debit Balance',0,,0.00
+4,'12 September 2018','Inward Unpaid Items',0,,0.00
+4,'12 September 2018','Unpaid Cheques and Debits',0,,0.00
+4,'12 September 2018','Refunds/Adjustments',0,,0.00
+4,'12 September 2018','Closing Balance',,-110.71
+4,'12 September 2018','Overdraft Limit',,0.00
+5
+5,,'Transactions'
+5,'Number','Date','Description1','Description2','Description3','Amount','Balance','Accrued Charges'
+5,1,'13 Aug',"FNB OB Pmt","Stella C Okhared","",70000.00,69822.51,
+5,2,'13 Aug',"Magtape Credit","Nedbank To FNB","",6000.00,75822.51,
+5,3,'14 Aug',"FNB App Transfer To","Payback","",-5800.00,70022.51,
+5,4,'14 Aug',"FNB App Transfer To","Payback","",-20000.00,50022.51,
+5,5,'14 Aug',"FNB App Payment To","Help Debit Order","",-50000.00,22.51,
+5,6,'14 Aug',"Magtape Credit","Vitaretail5003346961-148954003",,94.80,117.31,
+5,7,'15 Aug',"Device Payment Dda","Pay Arrears Payment","",-70.39,46.92,
+5,8,'16 Aug',"Device Payment Dda","Pay Arrears Payment","",-28.15,18.77,
+5,9,'17 Aug',"Device Payment Dda","Pay Arrears Payment","",-11.26,7.51,
+5,10,'20 Aug',"Device Payment Dda","Pay Arrears Payment","",-4.51,3.00,
+5,11,'27 Aug',"Device Payment Dda","",,-150.00,-147.00,
+5,12,'28 Aug',"Internet Trf From","Pay Off Connect","",700.00,553.00,
+5,13,'28 Aug',"Internet Trf From","Pay Off Connect","",100.00,653.00,
+5,14,'28 Aug',"Device Payment Dda","Pay Arrears Payment","",-138.71,514.29,
+5,15,'28 Aug',"Device Settlement Dda",,"",-451.00,63.29,
+5,16,'31 Aug',"Edo Collection Attempt",,"04001166565",98.00,63.29,
+5,17,'31 Aug',"Edo Collection Attempt",,"03000956396",99.00,63.29,
+5,18,'31 Aug',"Edo Collection Attempt",,"01000226184",99.99,63.29,
+5,19,'31 Aug',"Edo Collection Attempt",,"02000732837",109.00,63.29,
+5,20,'31 Aug',"#Edo Collect Attempt Fee","#Re Trade  Re433798","180831",-8.50,54.79,
+5,21,'31 Aug',"#Edo Collect Attempt Fee","#Odh Hold  O312688","180831",-8.50,46.29,
+5,22,'31 Aug',"#Edo Collect Attempt Fee","#Dre       Drecon60122   180831",,-8.50,37.79,
+5,23,'01 Sep',"#Edo Collect Attempt Fee","#Mzansi    08707145934081180831",,-8.50,29.29,
+5,24,'12 Sep',"#Monthly Account Fee",,"",-140.00,-110.71,
+6,'END'

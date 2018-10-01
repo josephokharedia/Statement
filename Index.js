@@ -1,4 +1,5 @@
-const getCsv = require('./Csv-Statements');
+const getCsv = require('./Csv-Statements.js');
+const {take} = require('rxjs/operators');
 
-getCsv(1, 'FNB Cheque Statements').pipe(take(4)).subscribe(console.log);
-console.log()
+console.log(getCsv);
+getCsv(1, 'FNB Cheque Statements').pipe(take(1)).subscribe(console.log);

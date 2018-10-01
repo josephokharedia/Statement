@@ -4,6 +4,9 @@ const path = require('path');
 const hash = require('object-hash');
 const readline = require('readline');
 const dateFormat = require('dateformat');
+const FNBStatement = require('./FNBStatement');
+const NedbankStatement = require('./NedbankStatement');
+const util = require('util');
 
 const parser = parse({
     relax_column_count: true,
@@ -11,16 +14,20 @@ const parser = parse({
     rtrim: true
 });
 
+const fnbStatement = new NedbankStatement();
 parser.on('data', (chunk) => {
-    if (chunk && (chunk instanceof Array) && chunk.length && /[0-9]{2}[a-zA-Z]{3}[0-9]{4}/.test(chunk[0])) {
-        chunk[0] = dateFormat(new Date(chunk[0]), "dd-mm-yyyy");
-        chunk.unshift(hash(chunk, {algorithm: 'md5'}));
-        console.log(chunk);
+    if (chunk && (chunk instanceof Array) && chunk.length) {
+        fnbStatement.process(chunk);
     }
 });
 
+parser.on('end', () => {
+    console.log(util.inspect(fnbStatement, false, null, true));
+    console.log(fnbStatement.statement.transactions.length);
+});
 
-const csvReadStream = fs.createReadStream(path.join(__dirname, '/Statement.csv'));
+
+const csvReadStream = fs.createReadStream(path.join(__dirname, '/Nedbank-Statement.csv'));
 const rl = readline.createInterface({input: csvReadStream});
 
 rl.on('line', (line) => {
@@ -28,4 +35,4 @@ rl.on('line', (line) => {
     parser.write('\n');
 });
 
-// csvReadStream.pipe(parser);
+rl.on('close', () => parser.end());

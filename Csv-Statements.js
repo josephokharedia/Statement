@@ -101,5 +101,5 @@ const getCsvAttachmentsOfMessagesWithLabel = (chunkSize, label) => {
 };
 
 module.exports = (chunkSize, labelName) => {
-    getCsvAttachmentsOfMessagesWithLabel(chunkSize, labelName).pipe(map(data => Buffer.from(data, 'base64').toString('utf8')));
+    return getCsvAttachmentsOfMessagesWithLabel(chunkSize, labelName).pipe(map(data => Buffer.from(data, 'base64').toString('utf8')));
 };
