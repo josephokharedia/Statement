@@ -5,9 +5,9 @@
   "main": "CsvParser.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "start": "node CsvParser.js",
-    "google-api": "node Google-Api.js",
-    "test-ob": "node Test-Observable.js"
+    "start": "node Index.js",
+    "csv-statements": "node Csv-Statements.js",
+    "test-observable": "node Test-Observable.js"
   },
   "author": "",
   "license": "ISC",

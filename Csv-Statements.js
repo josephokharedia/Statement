@@ -73,7 +73,7 @@ const listMessagesObservable = (chunkSize = 1, labelIds = []) => {
     };
     return googleResourceObservable(resource)
         .pipe(
-            expand(chunk => _getNextPage(chunk.nextPageToken).pipe(delay(3000))),
+            expand(chunk => _getNextPage(chunk.nextPageToken)),
             pluck('messages'),
             mergeAll()
         );
@@ -100,34 +100,6 @@ const getCsvAttachmentsOfMessagesWithLabel = (chunkSize, label) => {
     );
 };
 
-
-// listMessagesObservable(100, ['Label_10']).subscribe(msg => console.log(msg));
-
-// getMessageIdsWithLabel(20, 'FNB Cheque Statements').subscribe(msgs => console.log(msgs));
-
-let counter = 0;
-getCsvAttachmentsOfMessagesWithLabel(1, 'FNB Cheque Statements').subscribe(x => {
-    const csv = Buffer.from(x, 'base64').toString('utf8');
-    console.log(csv, "\n\n\n\n");
-});
-
-// getLabelIdWithNameObservable('FNB Cheque Statements').subscribe(id => {
-//     console.log(id);
-// });
-
-// accessTokenObservable.subscribe(token => console.log(">>> accessToken:", token));
-// accessTokenObservable.subscribe(token => console.log(">>> accessToken:", token));
-// accessTokenObservable.subscribe(token => console.log(">>> accessToken:", token));
-//
-// setTimeout(() => {
-//     accessTokenObservable.subscribe(token => console.log(">>> accessToken:", token));
-// }, 4000);
-// accessTokenObservable.subscribe(token => {
-//     findLabelIdByName(token, 'FNB Cheque Statements')
-//         .then(id => getMessagesInLabel(token, id), (err) => console.log(err))
-//         .then(messages => console.log(messages))
-//         .catch(err => console.error(err));
-//
-// }, err => console.log(err));
-
-
+module.exports = (chunkSize, labelName) => {
+    getCsvAttachmentsOfMessagesWithLabel(chunkSize, labelName).pipe(map(data => Buffer.from(data, 'base64').toString('utf8')));
+};
