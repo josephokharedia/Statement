@@ -2,7 +2,7 @@ const https = require('http-debug').https;
 const queryString = require('querystring');
 const {Observable, EMPTY, of} = require('rxjs');
 const {concatMap, map, mergeMap, tap, share, expand, flatMap, pluck, filter, first, concatAll, mergeAll, delay} = require('rxjs/operators');
-const accessTokenObservable = require('./Access-Token');
+const accessTokenObservable = require('./access-token');
 
 https.debug = 1;
 
