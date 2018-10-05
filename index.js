@@ -1,4 +1,4 @@
-const {mergeMap,concatMap} = require('rxjs/operators');
+const {mergeMap, concatMap} = require('rxjs/operators');
 const csvAttachments = require('./gmail-csv-attachments');
 const transactions$ = require('./statement-transactions');
 const mongoose = require('mongoose');
@@ -16,6 +16,7 @@ mongoose.connect('mongodb://localhost/statement', {
     useNewUrlParser: true
 });
 const Transaction = mongoose.model('Transaction', new mongoose.Schema({
+    idx: {type: Number},
     accountNo: {type: String},
     date: {type: Date, index: true},
     description: {type: String, index: true},
@@ -27,15 +28,20 @@ const Transaction = mongoose.model('Transaction', new mongoose.Schema({
 const chunkSize = undefined, label = 'FNB Cheque Statements';
 csvAttachments(chunkSize, label)
     .pipe(concatMap(csv => transactions$(csv, fnb())))
-    .subscribe(tx => new Transaction({...tx}).save(err => {
-            if (err) {
-                console.log(tx);
-                handleError(err);
-            }
-        }),
-        err => handleError(err),
-        () => console.log('complete')
-    );
+    .subscribe(tx => saveTransaction(tx), err => handleError(err), () => console.log('complete'));
+
+const saveTransaction = (tx) => {
+    Transaction.find({hash: tx.hash}, (err, docs) => {
+        if (!docs.length) {
+            new Transaction({...tx}).save(err => {
+                if (err) {
+                    console.log(tx);
+                    handleError(err);
+                }
+            });
+        }
+    });
+};
 
 process.on('SIGINT', () => {
     console.log('disconnecting mongoose ...');

@@ -1,7 +1,7 @@
 const https = require('http-debug').https;
 const queryString = require('querystring');
 const {Observable, EMPTY, of} = require('rxjs');
-const {concatMap, map, mergeMap, expand, pluck, filter, first, mergeAll, share, delay} = require('rxjs/operators');
+const {concatMap, map, mergeMap, expand, pluck, filter, first, mergeAll, delay} = require('rxjs/operators');
 const gmailAccessToken$ = require('./access-token');
 
 https.debug = 1;
@@ -73,7 +73,7 @@ const gmailMessagesWithLabelIds$ = (chunkSize, labelIds = [], interval) => {
             /* TODO:
             recursively get next page of messages. Potentially add a volume control here to delay
             getting the next batch of messages */
-            expand(chunk => _getNextPageOfMessages(chunk.nextPageToken)),
+            expand(chunk => _getNextPageOfMessages(chunk.nextPageToken).pipe(delay(interval))),
             filter(chunk => chunk && chunk.messages && chunk.messages.length),
             pluck('messages'),
             mergeAll()

@@ -12,7 +12,6 @@ class FNB extends stream.Transform {
     }
 
     _transform(line, encoding, callback) {
-        let transaction;
         // 2,62295306578,'MR JOSEPH I OKHAREDIA','FNB PREMIER CHEQUE ACCOUNT'
         if (/[2]/.test(line[0]) && /[0-9]+/.test(line[1])) {
             this._accountNumber = line[1];
@@ -39,9 +38,7 @@ class FNB extends stream.Transform {
                 date.setFullYear(this._fromDate.getFullYear());
             }
             date.setSeconds(date.getSeconds() + 1); // Some how javascript interprets '01 Apr' to '31 Mar 00:00:00'
-            transaction = {accountNumber: this._accountNumber, date, description, amount, balance};
-            transaction.hash = hash({n: this._nTransactions++, ...transaction});
-            this.push(transaction);
+            this.push({accountNumber: this._accountNumber, date, description, amount, balance});
         }
 
         callback();
@@ -56,7 +53,6 @@ class Nedbank extends stream.Transform {
     }
 
     _transform(line, encoding, callback) {
-        let transaction;
         // Account Number : ,1140197096
         if (line[0].toLowerCase().trim().startsWith('account number')) {
             this._accountNumber = line[1];
@@ -75,9 +71,7 @@ class Nedbank extends stream.Transform {
             let balance = line[3];
             let date = new Date(line[0]);
             date.setSeconds(date.getSeconds() + 1); // Some how javascript interprets '01 Apr' to '31 Mar 00:00:00'
-            transaction = {accountNumber: this._accountNumber, date, description, amount, balance};
-            transaction.hash = hash({n: this._nTransactions++, ...transaction});
-            this.push(transaction);
+            this.push({accountNumber: this._accountNumber, date, description, amount, balance});
         }
 
         callback();
