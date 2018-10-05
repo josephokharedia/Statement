@@ -1,35 +1,50 @@
-const {Observable, interval, of} = require('rxjs');
-const {take, mergeMap, tap, scan, sample, share, filter, timer, switchMap, merge} = require('rxjs/operators');
-const statements = require('./statements');
-const {fnb, nedbank} = require('./transactions');
-const util = require('util');
-const assert = require('assert');
-const MongoClient = require('mongodb').MongoClient;
+const {mergeMap,concatMap} = require('rxjs/operators');
+const csvAttachments = require('./gmail-csv-attachments');
+const transactions$ = require('./statement-transactions');
+const mongoose = require('mongoose');
+const {fnb} = require('./csv-tx-middleware');
 
-const fnbTransactions = statements(null, 'FNB Cheque Statements').pipe(mergeMap(csv => fnb(csv)));
-const nedbankTransactions = statements(null, 'Nedbank Statements').pipe(take(1), mergeMap(csv => nedbank(csv)));
+// Get {chunkSize} csv-attachments labeled with name {label} every {interval}
+// const chunkSize = 1, label = 'FNB Cheque Statements', interval = 5000000;
+// csvAttachments(chunkSize, label, interval)
+//     .pipe(mergeMap(  csv => transactions$(csv, fnbTransaction())  ))
+//     .subscribe(x => console.log('tx:',x));
 
-const url = 'mongodb://localhost:27017';
-const dbName = 'statements';
-const client = new MongoClient(url);
-client.connect((err, db) => {
-    const dbo = db.db(dbName);
-    dbo.collection('transactions').drop();
 
-    fnbTransactions.subscribe(tx => {
-        dbo.collection('transactions').insertOne(tx, (err, r) => {
-            try {
-                assert.equal(null, err);
-                assert.equal(1, r.insertedCount);
-            } catch (err) {
-                console.log(tx);
-                console.log(err.stack);
-            }
-        });
-    });
-
-    process.on('SIGINT', () => {
-        db.close();
-        process.exit();
-    })
+mongoose.connect('mongodb://localhost/statement', {
+    useCreateIndex: true,
+    useNewUrlParser: true
 });
+const Transaction = mongoose.model('Transaction', new mongoose.Schema({
+    accountNo: {type: String},
+    date: {type: Date, index: true},
+    description: {type: String, index: true},
+    amount: {type: Number},
+    balance: {type: Number},
+    hash: {type: String, unique: true},
+}));
+
+const chunkSize = undefined, label = 'FNB Cheque Statements';
+csvAttachments(chunkSize, label)
+    .pipe(concatMap(csv => transactions$(csv, fnb())))
+    .subscribe(tx => new Transaction({...tx}).save(err => {
+            if (err) {
+                console.log(tx);
+                handleError(err);
+            }
+        }),
+        err => handleError(err),
+        () => console.log('complete')
+    );
+
+process.on('SIGINT', () => {
+    console.log('disconnecting mongoose ...');
+    mongoose && mongoose.disconnect();
+    process.exit();
+});
+
+const handleError = (err) => {
+    console.log('error occurred!');
+    console.log(err.stack);
+    throw err;
+};
