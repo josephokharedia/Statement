@@ -104,7 +104,7 @@ const gmailCsvAttachmentsWithLabel$ = (chunkSize, label, interval) => {
         );
 };
 
-module.exports = (chunkSize = 2, labelName = 'INBOX', interval = 0) => {
+module.exports = (labelName = 'INBOX', chunkSize, interval = 0) => {
     return gmailCsvAttachmentsWithLabel$(chunkSize, labelName, interval)
         .pipe(map(data => Buffer.from(data, 'base64').toString('utf8')));
 };
