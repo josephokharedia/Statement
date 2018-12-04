@@ -25,7 +25,7 @@ class FNBTransaction extends stream.Transform {
             let date = new Date(line[2]);
 
             if (date.getMonth() < this._fromDate.getMonth()) {
-                date.setUTCFullYear(this._toDate.getFullYear())
+                date.setFullYear(this._toDate.getFullYear())
             } else {
                 date.setFullYear(this._fromDate.getFullYear());
             }
