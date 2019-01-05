@@ -3,9 +3,18 @@ module.exports = function getTransactionsPipeline(options) {
     if (options.search) {
         matchQuery.push({description: {$regex: `${options.search}`, $options: 'i'}});
     }
+
+    if (options.hashCode) {
+        matchQuery.push({'hashCode': {$in: [options.hashCode]}});
+    }
+
+    if (options.statement) {
+        matchQuery.push({'statement': {$in: [options.statement]}});
+    }
+
     matchQuery.push({date: {$gte: options.fromDate}});
     matchQuery.push({date: {$lte: options.toDate}});
-    if (options.categories.length) {
+    if (options.categories && options.categories.length) {
         matchQuery.push
         (
             {
@@ -23,6 +32,16 @@ module.exports = function getTransactionsPipeline(options) {
     const dataEndIndex = options.pageSize;
     // const skip = {$skip: (options.pageIndex * options.pageSize)};
     const match = {$match: {$and: [...matchQuery]}};
+    let matchInstitution = {$match: {}};
+    if (options.institutions && options.institutions.length) {
+        matchInstitution = {
+            $match: {
+                $expr: {
+                    $setIsSubset: [options.institutions, ['$data.statement.institution']]
+                }
+            }
+        };
+    }
     const sortField = `data.${options.sortField}`;
     const sort = {[sortField]: options.sortDirection, 'data.id': 1};
     return [
@@ -81,6 +100,7 @@ module.exports = function getTransactionsPipeline(options) {
                 path: "$data.statement"
             }
         },
+        matchInstitution,
         {
             $project: {
                 count: 1,
@@ -133,7 +153,7 @@ module.exports = function getTransactionsPipeline(options) {
                 _id: {
                     count: "$count",
                     data: {
-                        id: "$data._id",
+                        _id: "$data._id",
                         date: "$data.date",
                         description: "$data.description",
                         amount: "$data.amount",
@@ -151,7 +171,7 @@ module.exports = function getTransactionsPipeline(options) {
                 _id: 0,
                 count: "$_id.count",
                 data: {
-                    id: "$_id.data.id",
+                    _id: "$_id.data._id",
                     date: "$_id.data.date",
                     description: "$_id.data.description",
                     amount: "$_id.data.amount",

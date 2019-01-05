@@ -13,20 +13,11 @@ async function getCategories() {
     }
 }
 
-async function getCategoriesSummaries(pipeline) {
-    try {
-        const {transactionsDb} = await db;
-        return transactionsDb.aggregate(pipeline).toArray();
-    } catch (e) {
-        throw e;
-    }
-}
-
 async function createCategory(category) {
     try {
         const {categoriesDb} = await db;
-        const {insertedId} = await categoriesDb.insertOne(category);
-        return insertedId;
+        const {ops} = await categoriesDb.insertOne(category);
+        return ops[0];
     } catch (e) {
         throw e;
     }
@@ -41,11 +32,11 @@ async function getCategoryDetails(categoryId) {
     }
 }
 
-async function updateCategory(category) {
+async function updateCategory(category, categoryId) {
     try {
         const {categoriesDb} = await db;
         const {value} = await categoriesDb.findOneAndUpdate(
-            {_id: category._id},
+            {_id: categoryId},
             {$set: {name: category.name, tags: category.tags, regex: category.regex}},
             {returnOriginal: false}
         );
@@ -68,7 +59,6 @@ async function deleteCategory(categoryId) {
 module.exports = {
     getCategories,
     getCategoryDetails,
-    getCategoriesSummaries,
     createCategory,
     updateCategory,
     deleteCategory

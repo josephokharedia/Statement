@@ -1,9 +1,10 @@
 const {expect, assert} = require('chai');
-const txBa = require('../../microservice/bc/transactions/control/TransactionsBa');
-const txEsi = require('../../microservice/bc/transactions/integration/TransactionsEsi');
+const txBa = require('../microservice/bc/transactions/control/TransactionsBa');
 const createTestDatabase = require('./CreateTestDatabase.spec');
 const moment = require('moment');
-const {toObjectId} = require('../../microservice/shared/Utils');
+const {toObjectId} = require('../microservice/shared/Utils');
+const event = require('../microservice/shared/EventUtil');
+const sinon = require('sinon');
 
 
 describe('Get Transactions with query options', () => {
@@ -163,50 +164,6 @@ describe('Search transaction description with search term', () => {
 
 });
 
-describe('Add transactions from statement', function () {
-    before(createTestDatabase);
-
-    it('should add transactions from statement', async function () {
-        const raw = `
-        2,123456,MR JOE SOAP,TEST ACCOUNT\n
-        3,01,01 'January 2018', '01 February 2019'\n
-        5,1,'01 Jan',"Test Statement","Transaction 01","",100.00,1000.00,\n
-        5,2,'02 Jan',"Test Statement","Transaction 02","",-200.00,1000.00,\n
-        5,3,'01 Feb',"Test Statement","Transaction 03","",300.00,-1000.00,\n
-        `;
-        const institution = 'FNB';
-        const statement = {raw, institution, _id: toObjectId('abcdef')};
-
-        await txBa.createTransactionsFromStatement(statement);
-        const transactions = await txEsi.getTransactions([{$match: {statement: statement._id}}]);
-        expect(transactions).to.have.lengthOf(3);
-        transactions.forEach(t => {
-            expect(t).to.have.property('statement').eql(toObjectId('abcdef'));
-            expect(t).to.have.property('_id');
-            expect(t).to.have.property('hashCode');
-            expect(t).to.have.property('batchId');
-            assert(moment(t.date).isValid());
-        });
-        transactions.sort((a, b) => moment(a.date).diff(moment(b.date)));
-
-        expect(transactions).to.have.deep.nested.property('0.description', 'Test Statement, Transaction 01, ');
-        expect(transactions).to.have.deep.nested.property('0.amount', 100.00);
-        expect(transactions).to.have.deep.nested.property('0.balance', 1000.00);
-        assert(moment(transactions[0].date).isSame(moment.utc('2018-01-01')));
-
-        expect(transactions).to.have.deep.nested.property('1.description', 'Test Statement, Transaction 02, ');
-        expect(transactions).to.have.deep.nested.property('1.amount', -200.00);
-        expect(transactions).to.have.deep.nested.property('1.balance', 1000.00);
-        assert(moment(transactions[1].date).isSame(moment.utc('2018-01-02')));
-
-        expect(transactions).to.have.deep.nested.property('2.description', 'Test Statement, Transaction 03, ');
-        expect(transactions).to.have.deep.nested.property('2.amount', 300.00);
-        expect(transactions).to.have.deep.nested.property('2.balance', -1000.00);
-        assert(moment(transactions[2].date).isSame(moment.utc('2018-02-01')));
-    });
-
-});
-
 describe('Aggregate categories', function () {
     beforeEach(createTestDatabase);
 
@@ -258,109 +215,98 @@ describe('Update Transactions based on changes in Categories', function () {
 
     it('update transactions on CreatedCategory', async function () {
         const category = {
-            _id: toObjectId(4),
+            id: toObjectId(4),
             name: 'Category 4',
             tags: ['description'],
             regex: [/description 1/i]
         };
-        await txBa.updateTransactionsWithNewCategory(category);
-        const transactionIdsWithCategoryPipeline = [
-            {$unwind: {path: '$categories'}},
-            {$match: {categories: toObjectId(4)}},
-            {$group: {_id: null, transactionIds: {$addToSet: '$_id'}}},
-            {$project: {_id: 0, transactionIds: 1}}
-        ];
-        const result = await txEsi.getTransactions(transactionIdsWithCategoryPipeline);
-        const ids = result && result.length > 0 ? result[0].transactionIds : [];
-        expect(ids).to.have.lengthOf(2);
-        expect(ids).to.include.deep.members([toObjectId(10), toObjectId(1)]);
+        await txBa.categorizeTransactions(category);
+        const queryOptions = {category: '4'};
+        const {data} = await txBa.getTransactions(queryOptions);
+        expect(data).to.have.lengthOf(2);
+        expect(data.map(d => d.id)).to.include.deep.members([toObjectId(10), toObjectId(1)]);
     });
 
     it('update transactions on UpdatedCategory', async function () {
         const category = {
-            _id: toObjectId(1),
+            id: toObjectId(1),
             regex: [/description 9/i]
         };
-        await txBa.updateTransactionsWithUpdatedCategory(category);
-        const transactionIdsWithCategoryPipeline = [
-            {$unwind: {path: '$categories'}},
-            {$match: {categories: toObjectId(1)}},
-            {$group: {_id: null, transactionIds: {$addToSet: '$_id'}}},
-            {$project: {_id: 0, transactionIds: 1}}
-        ];
-        const result = await txEsi.getTransactions(transactionIdsWithCategoryPipeline);
-        const ids = result && result.length > 0 ? result[0].transactionIds : [];
-        expect(ids).to.have.lengthOf(1);
-        expect(ids).to.include.deep.members([toObjectId(9)]);
+        await txBa.categorizeTransactions(category);
+        const queryOptions = {category: '1'};
+        const {data} = await txBa.getTransactions(queryOptions);
+        expect(data).to.have.lengthOf(1);
+        expect(data.map(d => d.id)).to.include.deep.members([toObjectId(9)]);
     });
 
     it('update transactions on DeletedCategory', async function () {
-        await txBa.updateTransactionsWithDeletedCategory(1);
-        const transactionIdsWithCategoryPipeline = [
-            {$unwind: {path: '$categories'}},
-            {$match: {categories: toObjectId(1)}},
-            {$group: {_id: null, transactionIds: {$addToSet: '$_id'}}},
-            {$project: {_id: 0, transactionIds: 1}}
-        ];
-        const result = await txEsi.getTransactions(transactionIdsWithCategoryPipeline);
-        const ids = result && result.length > 0 ? result[0].transactionIds : [];
-        expect(ids).to.have.lengthOf(0);
+        await txBa.deCategorizeTransactions(2);
+        const queryOptions = {category: '2'};
+        const {data} = await txBa.getTransactions(queryOptions);
+        expect(data).to.have.lengthOf(0);
     });
 
 });
 
-describe('Add transactions from a statement with duplicates', function () {
-    before(createTestDatabase);
+describe('Add transactions', function () {
+    const createdTransactionsEventHandlerSpy = sinon.spy();
+    let createdTransactions;
+    before(async function () {
+        await createTestDatabase();
+        event.on('CreatedTransactions', createdTransactionsEventHandlerSpy);
+    });
 
-    const statementId = toObjectId('abcdef');
-    const institution = 'FNB';
     it('should add duplicate transactions that are in the same batch', async function () {
-        const raw = `
-        2,123456,MR JOE SOAP,TEST ACCOUNT\n
-        3,99,01 'January 2018', '01 February 2019'\n
-        5,1,'01 Jan',"Test Statement 1","","",-100.00,1000.00,\n
-        5,2,'02 Jan',"Test Statement 2","","",-200.00,1000.00,\n
-        5,3,'02 Jan',"Test Statement 2","","",-200.00,1000.00,\n
-        `;
-        const statement = {raw, institution, _id: statementId};
+        const statementId = toObjectId(99);
+        const transactions = [
+            {
+                date: moment.utc('2018-01-01').toDate(),
+                amount: 100.00,
+                balance: 101.00,
+                description: 'Test transaction 1',
+            },
+            {
+                date: moment.utc('2018-01-02').toDate(),
+                amount: 200.00,
+                balance: 201.00,
+                description: 'Test transaction 2',
+            },
+        ];
 
-        await txBa.createTransactionsFromStatement(statement);
-        const transactions = await txEsi.getTransactions([{$match: {statement: statement._id}}]);
-        expect(transactions).to.have.lengthOf(3);
+        createdTransactions = await txBa.createTransactions(transactions, statementId);
+        expect(createdTransactions).to.have.lengthOf(2);
+        createdTransactions.forEach(t => {
+            expect(t).to.have.property('id');
+        });
+    });
+
+    it('should check that CreatedTransactions event was invoked', function () {
+        assert(createdTransactionsEventHandlerSpy.withArgs(createdTransactions).calledOnce);
     });
 
     it('should not add duplicate transactions that are not in the same batch', async function () {
-        const raw = `
-        2,123456,MR JOE SOAP,TEST ACCOUNT\n
-        3,99,01 'January 2018', '01 February 2019'\n
-        5,4,'02 Jan',"Test Statement 2","","",-200.00,1000.00,\n
-        5,5,'03 Jan',"Test Statement 3","","",-300.00,1000.00,\n
-        5,6,'04 Jan',"Test Statement 4","","",-400.00,1000.00,\n
-        5,7,'04 Jan',"Test Statement 4","","",-400.00,1000.00,\n
-        `;
+        const statementId = toObjectId(99);
+        const transactions = [
+            {
+                date: moment.utc('2017-01-01').toDate(),
+                description: 'Test description 1',
+                amount: -100,
+                balance: 1000,
+            },
+            {
+                date: moment.utc('2018-01-02').toDate(),
+                amount: 300.00,
+                balance: 301.00,
+                description: 'Test transaction 3',
+            },
+        ];
 
-        const statement = {raw, institution, _id: statementId};
-
-        await txBa.createTransactionsFromStatement(statement);
-        const transactions = await txEsi.getTransactions([{$match: {statement: statement._id}}]);
-        expect(transactions).to.have.lengthOf(6);
-    });
-
-    it('should not add duplicate transactions when re-uploading the same batch', async function () {
-        const raw = `
-        2,123456,MR JOE SOAP,TEST ACCOUNT\n
-        3,99,01 'January 2018', '01 February 2019'\n
-        5,4,'02 Jan',"Test Statement 2","","",-200.00,1000.00,\n
-        5,5,'03 Jan',"Test Statement 3","","",-300.00,1000.00,\n
-        5,6,'04 Jan',"Test Statement 4","","",-400.00,1000.00,\n
-        5,7,'04 Jan',"Test Statement 4","","",-400.00,1000.00,\n
-        `;
-
-        const statement = {raw, institution, _id: statementId};
-
-        await txBa.createTransactionsFromStatement(statement);
-        const transactions = await txEsi.getTransactions([{$match: {statement: statement._id}}]);
-        expect(transactions).to.have.lengthOf(6);
+        const createdTransactions = await txBa.createTransactions(transactions, statementId);
+        expect(createdTransactions).to.have.lengthOf(1);
+        createdTransactions.forEach(t => {
+            expect(t).to.have.property('id');
+            expect(t).to.have.property('description', 'Test transaction 3');
+        });
     });
 });
 

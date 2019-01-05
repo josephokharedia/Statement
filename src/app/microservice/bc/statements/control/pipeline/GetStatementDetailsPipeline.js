@@ -5,12 +5,8 @@ module.exports = function getStatementDetails(statementId) {
             $match: {
                 _id: statementId
             }
-        }, {
-            $project: {
-                raw: 0,
-                id: 0
-            }
-        }, {
+        },
+        {
             $lookup: {
                 from: 'transactions',
                 localField: '_id',
@@ -21,14 +17,8 @@ module.exports = function getStatementDetails(statementId) {
             $unwind: {
                 path: "$transactions"
             }
-        }, {
-            $project: {
-                "transactions.id": 0,
-                "transactions.statement": 0,
-                "transactions.tags": 0,
-                "transactions.categories": 0
-            }
-        }, {
+        },
+        {
             $sort: {
                 "transactions.date": 1,
                 "transactions._id": 1
@@ -38,8 +28,11 @@ module.exports = function getStatementDetails(statementId) {
                 _id: {
                     id: "$_id",
                     accountNumber: "$accountNumber",
+                    statementNumber: "$statementNumber",
                     accountDescription: "$accountDescription",
-                    institution: "$institution"
+                    institution: "$institution",
+                    hashCode: '$hashCode',
+                    attachment: '$attachment'
                 },
                 openingBalance: {
                     $first: "$transactions.balance"
@@ -103,11 +96,13 @@ module.exports = function getStatementDetails(statementId) {
             }
         }, {
             $project: {
-                _id: 0,
-                id: "$_id.id",
+                _id: "$_id.id",
                 accountNumber: "$_id.accountNumber",
+                statementNumber: "$_id.statementNumber",
                 accountDescription: "$_id.accountDescription",
                 institution: "$_id.institution",
+                hashCode: '$_id.hashCode',
+                attachment: '$_id.attachment',
                 openingBalance: 1,
                 closingBalance: 1,
                 totalCredit: 1,

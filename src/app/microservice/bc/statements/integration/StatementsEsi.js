@@ -28,16 +28,6 @@ async function getStatementDetails(pipeline) {
     }
 }
 
-async function getTransactionsForStatement(statementId) {
-    try {
-        const {transactionsDb} = await db;
-        const pipeline = [{$match: {statement: toObjectId(statementId)}}];
-        return transactionsDb.aggregate(pipeline).toArray();
-    } catch (e) {
-        throw e;
-    }
-}
-
 async function createStatement(statement) {
     try {
         const {statementsDb} = await db;

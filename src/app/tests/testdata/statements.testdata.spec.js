@@ -1,4 +1,4 @@
-const {toObjectId} = require('../../../microservice/shared/Utils');
+const {toObjectId} = require('../../microservice/shared/Utils');
 module.exports = [
     {
         _id: toObjectId(1),
@@ -7,7 +7,7 @@ module.exports = [
         statementNumber: '01',
         institution: 'Test Bank',
         hashCode: '1',
-        raw: null,
+        attachment: null,
     },
     {
         _id: toObjectId(2),
@@ -16,6 +16,6 @@ module.exports = [
         statementNumber: '02',
         institution: 'Test Bank',
         hashCode: '2',
-        raw: null,
+        attachment: null,
     }
 ];

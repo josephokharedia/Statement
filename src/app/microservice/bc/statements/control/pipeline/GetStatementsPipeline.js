@@ -1,12 +1,14 @@
-module.exports = function getStatements() {
+module.exports = function getStatements(options) {
+    const matchQuery = [{}];
 
+    if (options.hashCode) {
+        matchQuery.push({hashCode: options.hashCode});
+    }
+
+    const match = {$match: {$and: [...matchQuery]}};
     return [
+        match,
         {
-            $project: {
-                raw: 0,
-                id: 0
-            }
-        }, {
             $lookup: {
                 from: 'transactions',
                 localField: '_id',
@@ -18,13 +20,6 @@ module.exports = function getStatements() {
                 path: "$transactions"
             }
         }, {
-            $project: {
-                "transactions._id": 0,
-                "transactions.statement": 0,
-                "transactions.tags": 0,
-                "transactions.categories": 0
-            }
-        }, {
             $sort: {
                 "transactions.date": 1,
                 "transactions._id": 1
@@ -32,11 +27,13 @@ module.exports = function getStatements() {
         }, {
             $group: {
                 _id: {
-                    id: "$_id",
+                    _id: "$_id",
                     accountNumber: "$accountNumber",
                     accountDescription: "$accountDescription",
                     institution: "$institution",
-                    statementNumber: "$statementNumber"
+                    statementNumber: "$statementNumber",
+                    hashCode: "$hashCode",
+                    attachment: "$attachment"
                 },
                 openingBalance: {
                     $first: "$transactions.balance"
@@ -75,18 +72,19 @@ module.exports = function getStatements() {
             }
         }, {
             $project: {
-                _id: 0,
-                id: "$_id.id",
+                _id: "$_id._id",
                 accountNumber: "$_id.accountNumber",
                 accountDescription: "$_id.accountDescription",
                 institution: "$_id.institution",
+                statementNumber: '$_id.statementNumber',
+                hashCode: '$_id.hashCode',
+                attachment: '$_id.attachment',
                 openingBalance: 1,
                 closingBalance: 1,
                 totalCredit: 1,
                 totalDebit: 1,
                 fromDate: 1,
                 toDate: 1,
-                statementNumber: "$_id.statementNumber"
             }
         }, {
             $sort: {

@@ -4,32 +4,48 @@
  * Generates a mongodb aggregation query pipeline for Transactions
  * Invokes Transactions External Service interface to execute the pipeline
  */
-const parse = require('csv-parse');
+const {unwrapError} = require('../../../shared/Utils');
 const txEsi = require('../integration/TransactionsEsi');
+const catBa = require('../../categories/control/CategoriesBa');
 const {escapeRegExp} = require('../../../shared/Utils.js');
 const getTransactionsPipeline = require('./pipeline/GetTransactionsPipeline');
 const searchTransactionsPipeline = require('./pipeline/SearchTransactionsPipeline');
-const es = require("event-stream");
-const FNBTransactionTransformer = require('./transformers/FNBTransactionTransformer');
-const NedbankTransactionTransformer = require('./transformers/NedbankTransactionTransformer');
-const ObjectId = require('mongodb').ObjectId;
-const hash = require('object-hash');
 const aggregateCategoriesForStatementPipeline = require('./pipeline/AggregateCategoriesForStatementPipeline');
 const aggregateCategoriesForYearPipeline = require('./pipeline/AggregateCategoriesForYearPipeline');
-const {toObjectId} = require('../../../shared/Utils');
+const {toObjectId, hashTransaction} = require('../../../shared/Utils');
+const event = require('../../../shared/EventUtil');
+const GetTransactionsResultTo = require('./transferobject/GetTransactionsResultTo');
+const GetCategoriesPerYearResultTo = require('./transferobject/GetCategoriesPerYearResultTo');
+const GetCategoriesPerStatementResultTo = require('./transferobject/GetCategoriesPerStatementResultTo');
+const TransactionTo = require('./transferobject/TransactionTo');
+const TransactionEntity = require('../entity/TransactionEntity');
+
+const DEFAULT_QUERY_OPTIONS = {
+    search: null,
+    pageSize: 10,
+    pageIndex: 0,
+    fromDate: new Date('01-01-2000'),
+    toDate: new Date(),
+    sortField: 'date',
+    sortDirection: 1,
+    categories: [],
+    hashCode: null,
+    statement: null,
+    institution: null
+};
 
 async function getTransactions(queryOptions) {
-    const userQueryOptions = generateUserQueryOptions(queryOptions);
+    const userQueryOptions = _generateUserQueryOptions(queryOptions);
     try {
         const pipeline = getTransactionsPipeline(userQueryOptions);
         const docs = await txEsi.getTransactions(pipeline);
         if (docs.length === 0) {
-            return {count: 0, data: []};
+            return new GetTransactionsResultTo();
         } else {
-            return docs[0];
+            return new GetTransactionsResultTo(docs[0]);
         }
     } catch (e) {
-        throw e;
+        return unwrapError(`Failed to get transactions`, e);
     }
 }
 
@@ -45,7 +61,7 @@ async function searchTransactionDescription({q}) {
             return docs.map(r => r.description);
         }
     } catch (e) {
-        throw e;
+        return unwrapError(`Failed to search transaction`, e);
     }
 }
 
@@ -56,60 +72,87 @@ async function aggregateCategoriesForYear({year}) {
 
     try {
         const pipeline = aggregateCategoriesForYearPipeline(year);
-        return txEsi.getTransactions(pipeline);
+        const results = await txEsi.getTransactions(pipeline);
+        return results.map(r => new GetCategoriesPerYearResultTo(r));
     } catch (e) {
-        throw e;
+        return unwrapError(`Failed to aggregate categories per year`, e);
     }
 }
 
 async function aggregateCategoriesForStatement({statementId}) {
     if (!statementId) {
-        throw Error(`StatementId cannot be null`);
+        throw Error(`StatementId cannot be Null`);
     }
     try {
         const pipeline = aggregateCategoriesForStatementPipeline(toObjectId(statementId));
         const result = await txEsi.getTransactions(pipeline);
         if (result.length > 0) {
-            return result[0].categories;
+            return result[0].categories.map(c => new GetCategoriesPerStatementResultTo(c));
         } else {
             return [];
         }
     } catch (e) {
-        throw e;
+        return unwrapError(`Failed to aggregate categories per statement`, e);
     }
 }
 
-async function createTransactionsFromStatement(statement) {
-    const transformer = getTransactionTransformer(statement.institution);
-    if (!transformer) {
-        throw Error(`No Transaction transformer for institution ${statement.institution}`);
+async function createTransactions(transactions = [], statementId) {
+    try {
+        if (!statementId) {
+            throw Error(`StatementId cannot be Null`)
+        }
+
+        const uniqueTransactionsTo = [];
+        for (const t of transactions) {
+            const dbTransactions = await txEsi.getTransactions([{$match: {hashCode: hashTransaction(t)}}]);
+            if (dbTransactions.length === 0) {
+                uniqueTransactionsTo.push(new TransactionEntity(t, statementId));
+            }
+        }
+
+        if (!uniqueTransactionsTo.length) {
+            return [];
+        }
+
+        const {ops} = await txEsi.createTransactions(uniqueTransactionsTo);
+        const createdTransactions = ops.map(t => new TransactionTo(t));
+        event.raise('CreatedTransactions', createdTransactions);
+        return createdTransactions;
+    } catch (e) {
+        return unwrapError(`Failed to create ${transactions && transactions.length} transactions`, e);
     }
-    let transactions = await transformStatementToTransactions(transformer, statement);
+}
 
-    transactions = await removeDuplicateTransactions(transactions);
-    if (transactions.length === 0) {
-        return [];
+async function categorizeTransactions(category = null, transactions = []) {
+    try {
+        let categories;
+        if (category) {
+            categories = [category];
+        } else {
+            categories = await catBa.getCategories();
+        }
+        for (let _category of categories) {
+            await txEsi.deCategorizeTransactions(_category.id);
+            await txEsi.categorizeTransactions(_category.id, _category.regex, transactions.map(t => t._id));
+        }
+    } catch (e) {
+        return unwrapError(`Failed to categorize new transactions`, e)
     }
-
-    const {ops: createdTransactions} = await txEsi.createTransactions(transactions);
-    return createdTransactions;
 }
 
-
-async function updateTransactionsWithNewCategory(category) {
-    return txEsi.updateTransactionsWithNewCategory(category);
+async function deCategorizeTransactions(categoryId) {
+    try {
+        await txEsi.deCategorizeTransactions(toObjectId(categoryId));
+    } catch (e) {
+        return unwrapError(`Failed to update transactions with deleted category`, e)
+    }
 }
 
-async function updateTransactionsWithUpdatedCategory(category) {
-    await txEsi.removeCategoriesFromTransactions(category._id);
-    return txEsi.updateTransactionsWithNewCategory(category);
-}
-
-async function updateTransactionsWithDeletedCategory(categoryId) {
-    return txEsi.removeCategoriesFromTransactions(toObjectId(categoryId));
-}
-
-function generateUserQueryOptions({search, pageSize, pageIndex, fromDate, toDate, sortField, sortDirection, category}) {
+function _generateUserQueryOptions(
+    {
+        search, pageSize, pageIndex, fromDate, toDate, sortField, sortDirection, category,
+        hashCode, statement, institution
+    }) {
     const userQueryOptions = {};
     if (search) {
         userQueryOptions.search = escapeRegExp(search);
@@ -138,82 +181,40 @@ function generateUserQueryOptions({search, pageSize, pageIndex, fromDate, toDate
     const categories = category;
     if (categories) {
         if (Array.isArray(categories)) {
-            userQueryOptions.categories = categories.map(str => ObjectId(escapeRegExp(str)));
+            userQueryOptions.categories = categories.map(str => toObjectId(escapeRegExp(str.toString())));
         } else {
-            userQueryOptions.categories = [ObjectId(escapeRegExp(categories))];
+            userQueryOptions.categories = [toObjectId(escapeRegExp(categories.toString()))];
         }
     }
 
-    return Object.assign({}, DEFAULT_QUERY_OPTIONS, userQueryOptions);
-}
-
-const DEFAULT_QUERY_OPTIONS = {
-    search: null,
-    pageSize: 10,
-    pageIndex: 0,
-    fromDate: new Date('01-01-2000'),
-    toDate: new Date(),
-    sortField: 'date',
-    sortDirection: 1,
-    categories: []
-};
-
-function getTransactionTransformer(institution) {
-    switch (institution) {
-        case 'FNB':
-            return new FNBTransactionTransformer();
-        case 'NEDBANK':
-            return new NedbankTransactionTransformer();
-        default:
-            return null;
+    if (hashCode) {
+        userQueryOptions.hashCode = escapeRegExp(hashCode);
     }
-}
 
-async function transformStatementToTransactions(transformer, statement) {
-    return new Promise((resolve) => {
-        const batchId = String(Date.now());
-        const transactions = []; // array to hold all transactions produced from the statement
-        // setup the csv parser breakup a comma separated line into an array of values
-        const csvParser = parse({relax_column_count: true, ltrim: true, rtrim: true});
-        const innerStream = es.readArray([statement.raw]) // read the csv into an event stream
-            .pipe(es.split(/(\r?\n)/)) // break up the csv by new line
-            .pipe(csvParser) // feed each line into the csv parser to get an array of values
-            .pipe(transformer) // feed the line values into a transaction transformer that will collate the values from
-            // each line and spit out a transaction when complete
-            .pipe(es.map((_transaction, callback) => {
-                _transaction.hashCode = hash(_transaction);
-                _transaction.batchId = batchId;
-                _transaction.statement = statement._id;
-                transactions.push(_transaction);
-                callback();
-            }));
-        innerStream.on('end', () => {
-            if (transactions.length === 0) throw Error(`No Transactions created from statement`);
-            resolve(transactions);
-        });
-    });
-}
+    if (statement) {
+        userQueryOptions.statement = toObjectId(statement);
+    }
 
-async function removeDuplicateTransactions(transactions) {
-    const hashCodes = transactions.map(t => t.hashCode);
+    const institutions = institution;
+    if (institutions) {
+        if (Array.isArray(institutions)) {
+            userQueryOptions.institutions = institutions.map(str => escapeRegExp(str));
+        } else {
+            userQueryOptions.institutions = [escapeRegExp(institutions)];
+        }
+    }
 
-    // get existing hashCodes from db
-    const transactionsInDb = await txEsi.getTransactions([
-        {$match: {'hashCode': {$in: hashCodes}}}
-    ]);
-    const existingHashCodes = [...new Set(transactionsInDb.map(t => t.hashCode))];
 
-    return transactions.filter(t => !existingHashCodes.includes(t.hashCode))
+    return Object.assign({}, DEFAULT_QUERY_OPTIONS, userQueryOptions);
 }
 
 module.exports =
     {
         getTransactions,
         searchTransactionDescription,
-        createTransactionsFromStatement,
+        createTransactions,
         aggregateCategoriesForYear,
         aggregateCategoriesForStatement,
-        updateTransactionsWithNewCategory,
-        updateTransactionsWithUpdatedCategory,
-        updateTransactionsWithDeletedCategory
+        categorizeTransactions,
+        deCategorizeTransactions
     };

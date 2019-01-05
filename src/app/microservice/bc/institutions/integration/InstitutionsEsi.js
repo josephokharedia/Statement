@@ -1,12 +1,11 @@
 /*
  * Send query instruction to mongodb and return return results from db
  */
-const db = require('../../../shared/DbCollections');
+const SUPPORTED_INSTITUTIONS = ['FNB', 'NEDBANK'];
 
 async function getInstitutions() {
     try {
-        const {statementsDb} = await db;
-        return statementsDb.distinct('institution');
+        return SUPPORTED_INSTITUTIONS;
     } catch (e) {
         throw e;
     }

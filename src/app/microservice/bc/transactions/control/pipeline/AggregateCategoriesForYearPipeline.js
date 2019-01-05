@@ -78,7 +78,7 @@ module.exports = function categoriesSummaryByYear(year) {
         }, {
             $project: {
                 "categories": {
-                    id: "$categories._id.categories._id",
+                    _id: "$categories._id.categories._id",
                     name: "$categories._id.categories.name",
                     count: "$categories.count",
                     amount: "$categories.amount"

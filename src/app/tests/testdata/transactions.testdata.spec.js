@@ -1,5 +1,5 @@
 const moment = require('moment');
-const {toObjectId} = require('../../../microservice/shared/Utils');
+const {toObjectId} = require('../../microservice/shared/Utils');
 
 module.exports = [
     {
@@ -8,7 +8,6 @@ module.exports = [
         description: 'Test description 1',
         amount: -100,
         balance: 1000,
-        hashCode: '1',
         statement: toObjectId(1),
         categories: [toObjectId(1)]
     },
@@ -18,7 +17,6 @@ module.exports = [
         description: 'Test description 2',
         amount: -200,
         balance: 900,
-        hashCode: '2',
         statement: toObjectId(1),
         categories: [toObjectId(1), toObjectId(2)]
     },
@@ -28,7 +26,6 @@ module.exports = [
         description: 'Test description 3',
         amount: -300,
         balance: 800,
-        hashCode: '3',
         statement: toObjectId(1)
     },
     {
@@ -37,7 +34,6 @@ module.exports = [
         description: 'Test description 4',
         amount: -400,
         balance: 700,
-        hashCode: '4',
         statement: toObjectId(1)
     },
     {
@@ -46,7 +42,6 @@ module.exports = [
         description: 'Test description 5',
         amount: -500,
         balance: 600,
-        hashCode: '5',
         categories: [toObjectId(1)],
         statement: toObjectId(1)
     },
@@ -56,7 +51,6 @@ module.exports = [
         description: 'Test description 6',
         amount: -600,
         balance: 500,
-        hashCode: '6',
         statement: toObjectId(2)
     },
     {
@@ -65,7 +59,6 @@ module.exports = [
         description: 'Test description 7',
         amount: -700,
         balance: 400,
-        hashCode: '7',
         statement: toObjectId(2)
     },
     {
@@ -74,7 +67,6 @@ module.exports = [
         description: 'Test description 8',
         amount: -800,
         balance: 300,
-        hashCode: '8',
         statement: toObjectId(2)
     },
     {
@@ -91,7 +83,6 @@ module.exports = [
         description: 'Test description 10',
         amount: -1000,
         balance: 100,
-        hashCode: '9',
         statement: toObjectId(2)
     }
 ];

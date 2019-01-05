@@ -5,87 +5,58 @@
  * Invokes Categories External Service interface to execute the pipeline
  */
 const catEsi = require('../integration/CategoriesEsi');
-const {toObjectId} = require('../../../shared/Utils');
+const {toObjectId, unwrapError} = require('../../../shared/Utils');
 const event = require('../../../shared/EventUtil');
+const CategoryEntity = require('../entity/CategoryEntity');
+const CategoryTo = require('../control/transferobject/CategoryTo');
 
 async function getCategories() {
     try {
-        return catEsi.getCategories();
+        const dbCategories = await catEsi.getCategories();
+        return dbCategories.map(c => new CategoryTo(c));
     } catch (e) {
-        throw e;
-    }
-}
-
-async function getCategoryDetails(categoryId) {
-    try {
-        const result = await catEsi.getCategoryDetails(toObjectId(categoryId));
-        if (result && result.length) {
-            return result[0];
-        } else {
-            return [];
-        }
-    } catch (e) {
-        throw e;
+        return unwrapError(`Failed to get categories`, e);
     }
 }
 
 async function createCategory(category) {
-    if (!category) {
-        throw Error(`Category cannot be null`);
-    }
-
-    if (!category.tags) {
-        throw Error(`Category must have tags`);
-    }
-    category.regex = [];
-    for (let i = 0; i < category.tags.length; i++) {
-        category.regex.push(new RegExp([category.tags[i]].join(""), "i"));
-    }
-
     try {
-        const categoryId = await catEsi.createCategory(category);
-        const createdCategory = await getCategoryDetails(toObjectId(categoryId));
-        event.raise('CreatedCategory', createdCategory);
-        return createdCategory;
+        const categoryEntity = new CategoryEntity(category);
+        const createdDbCategory = await catEsi.createCategory(categoryEntity);
+        const categoryTo = new CategoryTo(createdDbCategory);
+        event.raise('CreatedCategory', categoryTo);
+        return categoryTo;
     } catch (e) {
-        throw e;
+        return unwrapError(`Failed to create categories`, e);
     }
 }
 
 async function updateCategory({categoryId}, category) {
-    if (!category) {
-        throw Error(`Category cannot be null`);
-    }
-
-    if (!category.tags) {
-        throw Error(`Category must have tags`);
-    }
-    category.regex = [];
-    for (let i = 0; i < category.tags.length; i++) {
-        category.regex.push(new RegExp([category.tags[i]].join(""), "i"));
-    }
-
     try {
-        category._id = toObjectId(categoryId);
-        const updatedCategory = await catEsi.updateCategory(category);
-        event.raise('UpdatedCategory', updatedCategory);
-        return updatedCategory;
+        if (!categoryId) {
+            throw Error(`CategoryId cannot be empty`);
+        }
+        const categoryEntity = new CategoryEntity(category);
+        const updatedDbCategory = await catEsi.updateCategory(categoryEntity, toObjectId(categoryId));
+        const categoryTo = new CategoryTo(updatedDbCategory);
+        event.raise('UpdatedCategory', categoryTo);
+        return categoryTo;
     } catch (e) {
-        throw e;
+        return unwrapError(`Failed to update categories`, e);
     }
 }
 
 async function deleteCategory({categoryId}) {
-    if (!categoryId) {
-        throw Error(`CategoryId cannot be null`);
-    }
-
     try {
-        const deletedCategory = await catEsi.deleteCategory(toObjectId(categoryId));
-        event.raise('DeletedCategory', deletedCategory);
-        return deletedCategory;
+        if (!categoryId) {
+            throw Error(`CategoryId cannot be empty`);
+        }
+        const deletedDbCategory = await catEsi.deleteCategory(toObjectId(categoryId));
+        const categoryTo = new CategoryTo(deletedDbCategory);
+        event.raise('DeletedCategory', categoryTo);
+        return categoryTo;
     } catch (e) {
-        throw e;
+        return unwrapError(`Failed to delete categories`, e);
     }
 }
 

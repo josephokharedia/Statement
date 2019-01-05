@@ -3,19 +3,14 @@
  */
 
 const express = require('express');
-const {handleError} = require('../../../shared/Utils.js');
 const router = express.Router();
 
-const instEsi = require('../integration/InstitutionsEsi');
+const instBa = require('../control/InstitutionsBa');
 router.get('/', getInstitutions);
 
 async function getInstitutions(req, res) {
-    try {
-        const result = await instEsi.getInstitutions();
-        res.send(result);
-    } catch (e) {
-        handleError(e, res, `Get Institutions`);
-    }
+        const result = await instBa.getInstitutions();
+        res.status(result.error? 500 : 200).send(result);
 }
 
 module.exports = {router};

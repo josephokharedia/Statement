@@ -1,0 +1,5 @@
+2,000000,MR JOE SOAP,NEW DRAFT STATEMENT
+3,01,'01 January 2018', '01 February 2019'
+5,1,'01 Jan',"Draft transaction 1","","",100.00,1000.00,
+5,2,'02 Jan',"Draft transaction 2","","",-200.00,1000.00,
+5,3,'03 Jan',"Draft transaction 3","","",300.00,-1000.00,

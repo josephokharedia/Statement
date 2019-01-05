@@ -4,16 +4,17 @@
   "description": "",
   "main": "CsvParser.js",
   "scripts": {
-    "test": "PROFILE=TEST mocha $NODE_DEBUG_OPTION --recursive src/app/crosscutting/tests",
+    "test": "PROFILE=TEST mocha $NODE_DEBUG_OPTION --recursive src/app/tests",
     "start": "node src/app/server.js"
   },
   "author": "",
   "license": "ISC",
   "dependencies": {
-    "body-parser": "latest",
+    "body-parser": "^1.18.3",
     "csv-parse": "^3.0.0",
     "event-stream": "^4.0.1",
     "express": "^4.16.3",
+    "express-formidable": "^1.2.0",
     "googleapis": "^34.0.0",
     "http-debug": "^0.1.2",
     "lodash": "^4.17.11",

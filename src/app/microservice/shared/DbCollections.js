@@ -12,7 +12,8 @@ module.exports = async function Db() {
         const transactionsDb = db.collection('transactions');
         const statementsDb = db.collection('statements');
         const categoriesDb = db.collection('categories');
-        return {transactionsDb, statementsDb, categoriesDb}
+        const draftsDb = db.collection('drafts');
+        return {transactionsDb, statementsDb, categoriesDb, draftsDb}
     } catch (e) {
         console.log(e.stack);
     }

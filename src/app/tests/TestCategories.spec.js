@@ -1,10 +1,10 @@
 const sinon = require('sinon');
 const {expect, assert} = require('chai');
-const catBa = require('../../microservice/bc/categories/control/CategoriesBa');
-const catEsi = require('../../microservice/bc/categories/integration/CategoriesEsi');
+const catBa = require('../microservice/bc/categories/control/CategoriesBa');
+const catEsi = require('../microservice/bc/categories/integration/CategoriesEsi');
 const createTestDatabase = require('./CreateTestDatabase.spec');
-const {toObjectId} = require('../../microservice/shared/Utils');
-const event = require('../../microservice/shared/EventUtil');
+const {toObjectId} = require('../microservice/shared/Utils');
+const event = require('../microservice/shared/EventUtil');
 
 
 describe('Get Categories', function () {
@@ -12,15 +12,15 @@ describe('Get Categories', function () {
 
     it('should return all categories', async () => {
         const categories = await catBa.getCategories();
-        expect(categories).to.have.deep.nested.property('0._id').eql(toObjectId(1));
+        expect(categories).to.have.deep.nested.property('0.id').eql(toObjectId(1));
         expect(categories).to.have.deep.nested.property('0.name', 'Category 1');
         expect(categories).to.have.deep.nested.property('0.tags.0', 'Category 1');
         expect(categories).to.have.deep.nested.property('0.regex.0', /Category 1/i);
-        expect(categories).to.have.deep.nested.property('1._id').eql(toObjectId(2));
+        expect(categories).to.have.deep.nested.property('1.id').eql(toObjectId(2));
         expect(categories).to.have.deep.nested.property('1.name', 'Category 2');
         expect(categories).to.have.deep.nested.property('1.tags.0', 'Category 2');
         expect(categories).to.have.deep.nested.property('1.regex.0', /Category 2/i);
-        expect(categories).to.have.deep.nested.property('2._id').eql(toObjectId(3));
+        expect(categories).to.have.deep.nested.property('2.id').eql(toObjectId(3));
         expect(categories).to.have.deep.nested.property('2.name', 'Category 3');
         expect(categories).to.have.deep.nested.property('2.tags.0', 'Category 3');
         expect(categories).to.have.deep.nested.property('2.regex.0', /Category 3/i);
@@ -45,8 +45,8 @@ describe('Create Category', function () {
         createdCategory = await catBa.createCategory(category);
         const categories = await catBa.getCategories();
         expect(categories).to.have.lengthOf(4);
-        expect(createdCategory).to.have.deep.nested.property('_id').eql(toObjectId(4));
-        expect(createdCategory).to.have.deep.nested.property('name', 'Category 4');
+        expect(createdCategory).to.have.property('id');
+        expect(createdCategory).to.have.property('name', 'Category 4');
         expect(createdCategory).to.have.deep.nested.property('tags.0', 'Category 4');
         expect(createdCategory).to.have.deep.nested.property('tags.1', 'Category 04');
         expect(createdCategory).to.have.deep.nested.property('tags.2', 'Category four');
@@ -77,8 +77,8 @@ describe('Update Category', function () {
         updatedCategory = await catBa.updateCategory(query, category);
         const categories = await catBa.getCategories();
         expect(categories).to.have.lengthOf(3);
-        expect(updatedCategory).to.have.deep.nested.property('_id').eql(toObjectId(3));
-        expect(updatedCategory).to.have.deep.nested.property('name', 'Category 03');
+        expect(updatedCategory).to.have.property('id').eql(toObjectId(3));
+        expect(updatedCategory).to.have.property('name', 'Category 03');
         expect(updatedCategory).to.have.deep.nested.property('tags.0', 'Category 3');
         expect(updatedCategory).to.have.deep.nested.property('tags.1', 'Category 03');
         expect(updatedCategory).to.have.deep.nested.property('tags.2', 'Category three');
@@ -110,7 +110,7 @@ describe('Delete Category', function () {
         deletedCategory = await catBa.deleteCategory(query);
         const categories = await catBa.getCategories();
         expect(categories).to.have.lengthOf(2);
-        expect(deletedCategory).to.have.deep.nested.property('_id').eql(toObjectId(1));
+        expect(deletedCategory).to.have.property('id').eql(toObjectId(1));
         expect(categories.map(c => c.name)).to.not.include('Category 1');
 
     });
