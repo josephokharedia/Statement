@@ -131,18 +131,20 @@ async function categorizeTransactions(category = null, transactions = []) {
         } else {
             categories = await catBa.getCategories();
         }
+
+        const transactionIds = transactions.map(t => t._id);
         for (let _category of categories) {
-            await txEsi.deCategorizeTransactions(_category.id);
-            await txEsi.categorizeTransactions(_category.id, _category.regex, transactions.map(t => t._id));
+            await deCategorizeTransactions(_category.id, transactionIds);
+            await txEsi.categorizeTransactions(_category.id, _category.regex, transactionIds);
         }
     } catch (e) {
         return unwrapError(`Failed to categorize new transactions`, e)
     }
 }
 
-async function deCategorizeTransactions(categoryId) {
+async function deCategorizeTransactions(categoryId, transactionIds = []) {
     try {
-        await txEsi.deCategorizeTransactions(toObjectId(categoryId));
+        await txEsi.deCategorizeTransactions(toObjectId(categoryId), transactionIds);
     } catch (e) {
         return unwrapError(`Failed to update transactions with deleted category`, e)
     }

@@ -5,6 +5,7 @@ const stmtBci = require('../../app/microservice/bc/statements/boundary/Statement
 const instBci = require('./bc/institutions/boundary/InstitutionBci');
 const catBci = require('../../app/microservice/bc/categories/boundary/CategoriesBci');
 const draftBci = require('../../app/microservice/bc/draft/boundary/DraftsBci');
+const healthBci = require('../../app/microservice/bc/health/boundary/HealthBci');
 const formidableMiddleware = require('express-formidable');
 
 const app = express();
@@ -15,6 +16,7 @@ const port = 3000;
 
 app.listen(port, () => console.log(`Ekugcineni backend listening on port ${port}!`));
 
+app.use('/api/health', healthBci.router);
 app.use('/api/transactions', txBci.router);
 app.use('/api/statements', stmtBci.router);
 app.use('/api/institutions', instBci.router);
