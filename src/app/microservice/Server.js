@@ -16,7 +16,7 @@ const port = process.env.APP_PORT || 3000;
 
 app.listen(port, () => console.log(`Ekugcineni backend listening on port ${port}!`));
 
-app.use('/api/health', healthBci.router);
+app.use('/', healthBci.router);
 app.use('/api/transactions', txBci.router);
 app.use('/api/statements', stmtBci.router);
 app.use('/api/institutions', instBci.router);
