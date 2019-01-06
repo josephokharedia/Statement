@@ -12,7 +12,7 @@ const app = express();
 app.use(bodyParser.json()); // for parsing application/json
 app.use(bodyParser.urlencoded({limit: '200mb', extended: true})); // for parsing application/x-www-form-urlencoded
 
-const port = 3000;
+const port = process.env.APP_PORT || 3000;
 
 app.listen(port, () => console.log(`Ekugcineni backend listening on port ${port}!`));
 
