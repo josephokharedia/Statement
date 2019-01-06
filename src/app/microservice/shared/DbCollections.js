@@ -4,7 +4,7 @@ const MongoClient = require("mongodb").MongoClient;
 const DB_HOST = process.env.MONGODB_HOSTNAME || 'localhost';
 const DB_PORT = process.env.MONGODB_PORT || '27017';
 const DB_USER = process.env.MONGODB_USER || '';
-const DB_PASSWORD = ocprocess.env.MONGODB_PASSWORD || '';
+const DB_PASSWORD = process.env.MONGODB_PASSWORD || '';
 const DB_NAME = process.env.MONGODB_DATABASE || 'ekugcineni';
 
 const URL = `mongodb://${DB_USER}:${DB_PASSWORD}@${DB_HOST}:${DB_PORT}/${DB_NAME}`;
