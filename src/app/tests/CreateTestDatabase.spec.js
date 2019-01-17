@@ -7,18 +7,25 @@ const draftsData = require('./testdata/drafts.testdata.spec');
 const {addHashCodeToTransactions, addHashCodeToStatements} = require('./TestUtils');
 
 
-const url = 'mongodb://localhost:27017';
-const TEST_DATABASE = 'ekugcineni-xunit';
+//mongodb.ekugcineni.svc
+const DB_HOST = process.env.MONGODB_HOSTNAME || 'localhost';
+const DB_PORT = process.env.MONGODB_PORT || '27017';
+const DB_USER = process.env.MONGODB_USER || '';
+const DB_PASSWORD = process.env.MONGODB_PASSWORD || '';
+const DB_NAME = process.env.MONGODB_DATABASE || 'ekugcineni-xunit';
 const TRANSACTION_COLLECTION = 'transactions';
 const STATEMENT_COLLECTION = 'statements';
 const CATEGORIES_COLLECTION = 'categories';
 const DRAFTS_COLLECTION = 'drafts';
 
+const URL = `mongodb://${DB_USER}:${DB_PASSWORD}@${DB_HOST}:${DB_PORT}/${DB_NAME}`;
+const client = new MongoClient(URL, {useNewUrlParser: true});
+
+
 module.exports = async function createTestDb() {
     try {
-        const client = await MongoClient.connect(url, {useNewUrlParser: true});
-        const db = client.db(TEST_DATABASE);
-
+        await client.connect();
+        const db = client.db(DB_NAME);
         const transactionsDb = db.collection(TRANSACTION_COLLECTION);
         const statementsDb = db.collection(STATEMENT_COLLECTION);
         const categoriesDb = db.collection(CATEGORIES_COLLECTION);
