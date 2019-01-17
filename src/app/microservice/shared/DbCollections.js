@@ -1,7 +1,7 @@
 const MongoClient = require("mongodb").MongoClient;
 
 //mongodb.ekugcineni.svc
-const DB_HOST = process.env.MONGODB_HOSTNAME || 'localhost';
+const DB_HOST = process.env.DATABASE_SERVICE_NAME || 'localhost';
 const DB_PORT = process.env.MONGODB_PORT || '27017';
 const DB_USER = process.env.MONGODB_USER || '';
 const DB_PASSWORD = process.env.MONGODB_PASSWORD || '';
