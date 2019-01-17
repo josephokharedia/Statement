@@ -1,0 +1,82 @@
+apiVersion: v1
+kind: DeploymentConfig
+metadata:
+  namespace: ekugcineni
+  name: statement-backend
+  labels:
+    app: statement-backend
+spec:
+  replicas: 1
+  selector:
+    app: statement-backend
+    deploymentconfig: statement-backend
+  strategy:
+    type: Rolling
+  template:
+    metadata:
+      labels:
+        app: statement-backend
+        deploymentconfig: statement-backend
+    spec:
+      containers:
+        - env:
+            - name: MONGODB_DATABASE
+              valueFrom:
+                secretKeyRef:
+                  key: MONGODB_DATABASE
+                  name: mongodb
+            - name: MONGODB_HOSTNAME
+              value: mongodb.ekugcineni.svc
+            - name: MONGODB_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  key: MONGODB_PASSWORD
+                  name: mongodb
+            - name: MONGODB_USER
+              value: appuser
+            - name: MONGODB_ADMIN_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  key: MONGODB_ADMIN_PASSWORD
+                  name: mongodb
+            - name: MONGODB_PORT
+              value: 27017
+            - name: APP_PORT
+              value: 8080
+          image: >-
+            172.30.1.1:5000/ekugcineni/statement-backend:latest
+          livenessProbe:
+            failureThreshold: 3
+            httpGet:
+              path: /
+              port: 8080
+              scheme: HTTP
+            initialDelaySeconds: 5
+            periodSeconds: 10
+            successThreshold: 1
+            timeoutSeconds: 5
+          name: statement-backend
+          ports:
+            - containerPort: 8080
+              protocol: TCP
+          readinessProbe:
+            failureThreshold: 3
+            httpGet:
+              path: /
+              port: 8080
+              scheme: HTTP
+            initialDelaySeconds: 5
+            periodSeconds: 10
+            successThreshold: 1
+            timeoutSeconds: 5
+  triggers:
+    - type: ConfigChange
+    - imageChangeParams:
+        automatic: true
+        containerNames:
+          - statement-backend
+        from:
+          kind: ImageStreamTag
+          name: 'statement-backend:latest'
+          namespace: ekugcineni
+      type: ImageChange

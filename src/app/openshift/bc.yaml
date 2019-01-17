@@ -1,0 +1,21 @@
+apiVersion: v1
+kind: BuildConfig
+metadata:
+  name: statement-backend
+  labels:
+    app: statement-backend
+  namespace: ekugcineni
+spec:
+  output:
+    to:
+      kind: ImageStreamTag
+      name: 'statement-backend:latest'
+  runPolicy: Serial
+  source:
+    git:
+      uri: 'https://github.com/josephokharedia/Statement.git'
+  strategy:
+    sourceStrategy:
+      from:
+        kind: ImageStreamTag
+        name: 'nodejs:10'
