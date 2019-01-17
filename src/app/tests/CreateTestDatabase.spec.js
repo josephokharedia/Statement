@@ -8,11 +8,11 @@ const {addHashCodeToTransactions, addHashCodeToStatements} = require('./TestUtil
 
 
 //mongodb.ekugcineni.svc
-const DB_HOST = process.env.MONGODB_HOSTNAME || 'localhost';
-const DB_PORT = process.env.MONGODB_PORT || '27017';
-const DB_USER = process.env.MONGODB_USER || '';
-const DB_PASSWORD = process.env.MONGODB_PASSWORD || '';
-const DB_NAME = process.env.MONGODB_DATABASE || 'ekugcineni-xunit';
+const DB_HOST = process.env.MONGODB_TEST_HOSTNAME || 'localhost';
+const DB_PORT = process.env.MONGODB_TEST_PORT || '27017';
+const DB_USER = process.env.MONGODB_TEST_USER || '';
+const DB_PASSWORD = process.env.MONGODB_TEST_PASSWORD || '';
+const DB_NAME = process.env.MONGODB_TEST_DATABASE || 'ekugcineni-xunit';
 const TRANSACTION_COLLECTION = 'transactions';
 const STATEMENT_COLLECTION = 'statements';
 const CATEGORIES_COLLECTION = 'categories';
