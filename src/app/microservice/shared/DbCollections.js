@@ -8,6 +8,7 @@ const DB_PASSWORD = process.env.MONGODB_PASSWORD || '';
 const DB_NAME = process.env.MONGODB_DATABASE || 'ekugcineni';
 
 const URL = `mongodb://${DB_USER}:${DB_PASSWORD}@${DB_HOST}:${DB_PORT}/${DB_NAME}`;
+console.log(`Connecting to ${URL}`);
 const client = new MongoClient(URL, {useNewUrlParser: true});
 
 
