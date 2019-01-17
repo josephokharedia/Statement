@@ -4,7 +4,7 @@
   "description": "",
   "main": "CsvParser.js",
   "scripts": {
-    "test": "MONGODB_DATABASE=ekugcineni-xunit ./node_modules/.bin/mocha $NODE_DEBUG_OPTION --recursive src/app/tests",
+    "test": "MONGODB_DATABASE=ekugcineni-xunit node_modules/.bin/mocha $NODE_DEBUG_OPTION --recursive src/app/tests",
     "start": "node src/app/microservice/Server.js"
   },
   "author": "",
